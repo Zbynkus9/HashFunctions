@@ -239,6 +239,10 @@ public:
 		unsigned int index = hashFunction1(key, capacity);
 		unsigned int collisions = 0;
 		while (table[index] != nullptr || collisions < capacity) {
+			if (table[index] == nullptr) {
+				collisions++;
+				continue; // Skip empty slots
+			}
 			if (table[index]->key == key) {
 				delete table[index];
 				table[index] = nullptr;
@@ -256,6 +260,10 @@ public:
 		unsigned int index = hashFunction2(key, capacity, size);
 		unsigned int collisions = 0;
 		while (table[index] != nullptr || collisions < capacity) {
+			if (table[index] == nullptr) {
+				collisions++;
+				continue; // Skip empty slots
+			}
 			if (table[index]->key == key) {
 				delete table[index];
 				table[index] = nullptr;
@@ -273,6 +281,10 @@ public:
 		unsigned int index = hashFunction3(key, capacity);
 		unsigned int collisions = 0;
 		while (table[index] != nullptr || collisions < capacity) {
+			if (table[index] == nullptr) {
+				collisions++;
+				continue; // Skip empty slots
+			}
 			if (table[index]->key == key) {
 				delete table[index];
 				table[index] = nullptr;
