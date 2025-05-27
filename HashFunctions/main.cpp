@@ -18,10 +18,10 @@ private:
 	HashNode<K, V>** table;
 	unsigned int capacity;
 	unsigned int size;
-	unsigned float loadFactor;
-	unsigned float maxLoadFactor;
+	float loadFactor;
+	float maxLoadFactor;
 public:
-	HashTable(unsigned int cap, unsigned int maxLoad = 0.8) : capacity(cap), size(0), maxLoadFactor(maxLoad) {
+	HashTable(unsigned int cap, float maxLoad = 0.8) : capacity(cap), size(0), maxLoadFactor(maxLoad) {
 		table = new HashNode<K, V>* [capacity];
 		for (unsigned int i = 0; i < capacity; ++i) {
 			table[i] = nullptr;
@@ -39,7 +39,7 @@ public:
 		return key % cap;
 	}
 	unsigned int hashFunction2(K key, unsigned int cap, unsigned int size) {
-		return (loadFactor * key % size) / (size / cap);
+		return ((int)(loadFactor * key) % size) / (float)(size / cap);
 	}
 	unsigned int hashFunction3(K key, unsigned int cap) {
 		unsigned int temp = key, hash = 0;
@@ -164,7 +164,8 @@ public:
 		capacity = newCapacity;
 	}
 	void insert1(K key, V value) {
-		if (size >= capacity * maxLoadFactor) {
+		size++;
+		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash1();
 		}
 		unsigned int index = hashFunction1(key, capacity);
@@ -172,11 +173,11 @@ public:
 			index = (index + 1) % capacity;
 		}
 		table[index] = new HashNode<K, V>(key, value);
-		size++;
 		loadFactor = (float)size / capacity;
 	}
 	void insert2(K key, V value) {
-		if (size >= capacity * maxLoadFactor) {
+		size++;
+		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash2();
 		}
 		unsigned int index = hashFunction2(key, capacity, size);
@@ -184,11 +185,11 @@ public:
 			index = (index + 1) % capacity;
 		}
 		table[index] = new HashNode<K, V>(key, value);
-		size++;
 		loadFactor = (float)size / capacity;
 	}
 	void insert3(K key, V value) {
-		if (size >= capacity * maxLoadFactor) {
+		size++;
+		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash3();
 		}
 		unsigned int index = hashFunction3(key, capacity);
@@ -196,7 +197,6 @@ public:
 			index = (index + 1) % capacity;
 		}
 		table[index] = new HashNode<K, V>(key, value);
-		size++;
 		loadFactor = (float)size / capacity;
 	}
 	V search1(K key) {
@@ -292,19 +292,19 @@ public:
 	unsigned int getCapacity() const {
 		return capacity;
 	}
-	unsigned float getLoadFactor() const {
+	float getLoadFactor() const {
 		return loadFactor;
 	}
-	unsigned float getMaxLoadFactor() const {
+	float getMaxLoadFactor() const {
 		return maxLoadFactor;
 	}
-}
+};
 
 int main() {
 	srand(time(NULL)); // Inicjalizacja generatora liczb losowych
 	const unsigned int iteracje = 1000000;
 
-	unsigned int klucze[iteracje];
+	unsigned int* klucze = new unsigned int [iteracje];
 
 	for (unsigned int i = 0; i < iteracje; i++) {
 		klucze[i] = rand() % 25000000; // Generowanie losowych kluczy
@@ -320,7 +320,7 @@ int main() {
 	// Tablica do przechowywania czasow sortowania  
 	long long** algorithmsTimes = new long long* [2];
 	for (int i = 0; i < 2; i++) {
-		sortTimes[i] = new long long[iteracje];
+		algorithmsTimes[i] = new long long[iteracje];
 	}
 
 
@@ -343,53 +343,75 @@ int main() {
 		{
 		case 0:
 		{
-			HashTable<int, int> hashTable1(1000);
+			HashTable<int, int> hashTable1(19);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable1.insert1(klucze[j], j);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[0][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+				if (j + 1 == iteracje / 10 || j + 1 == iteracje / 5 || j + 1 == iteracje / 2 || j + 1 == iteracje) {
+					cout << "Dodano " << j + 1 << " elementow." << endl;
+				}
 			}
-			for (unsigned int j = iteracje-1; j >= 0; j--) {
+			for (long int j = iteracje - 1; j >= 0; j--) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable1.remove1(klucze[j]);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[1][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+				if (j + 1 == iteracje / 10 || j + 1 == iteracje / 5 || j + 1 == iteracje / 2 || j + 1 == iteracje) {
+					cout << "Usunieto " << iteracje - j << " elementow." << endl;
+				}
 			}
 		}
-			break;
+		break;
 
 		case 1:
-			HashTable<int, int> hashTable2(1000);
+		{
+			HashTable<int, int> hashTable2(19);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable2.insert2(klucze[j], j);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[0][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+				if (j + 1 == iteracje / 10 || j + 1 == iteracje / 5 || j + 1 == iteracje / 2 || j + 1 == iteracje) {
+					cout << "Dodano " << j + 1 << " elementow." << endl;
+				}
 			}
-			for (unsigned int j = iteracje - 1; j >= 0; j--) {
+			for (long int j = iteracje - 1; j >= 0; j--) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable2.remove2(klucze[j]);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[1][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+				if (j + 1 == iteracje / 10 || j + 1 == iteracje / 5 || j + 1 == iteracje / 2 || j + 1 == iteracje) {
+					cout << "Usunieto " << iteracje - j << " elementow." << endl;
+				}
 			}
-			break;
+		}
+		break;
 
 		case 2:
-			HashTable<int, int> hashTable3(1000);
+		{
+			HashTable<int, int> hashTable3(19);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable3.insert3(klucze[j], j);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[0][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+				if (j + 1 == iteracje / 10 || j + 1 == iteracje / 5 || j + 1 == iteracje / 2 || j + 1 == iteracje) {
+					cout << "Dodano " << j + 1 << " elementow." << endl;
+				}
 			}
-			for (unsigned int j = iteracje - 1; j >= 0; j--) {
+			for (long int j = iteracje - 1; j >= 0; j--) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable3.remove3(klucze[j]);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[1][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+				if (j + 1 == iteracje / 10 || j + 1 == iteracje / 5 || j + 1 == iteracje / 2 || j + 1 == iteracje) {
+					cout << "Usunieto " << iteracje - j << " elementow." << endl;
+				}
 			}
-			break;
+		}
+		break;
 
 		default:
 			cerr << "Nieznany plik: " << resultsFiles[i] << endl;
@@ -406,5 +428,10 @@ int main() {
 		file.close();
 
 	}
+	for (int i = 0; i < 2; i++) {
+		delete[] algorithmsTimes[i];
+	}
+	delete[] algorithmsTimes;
+	delete[] klucze;
 	return 0;
 }
