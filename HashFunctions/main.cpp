@@ -304,6 +304,12 @@ int main() {
 	srand(time(NULL)); // Inicjalizacja generatora liczb losowych
 	const unsigned int iteracje = 1000000;
 
+	unsigned int klucze[iteracje];
+
+	for (unsigned int i = 0; i < iteracje; i++) {
+		klucze[i] = rand() % 25000000; // Generowanie losowych kluczy
+	}
+
 	const string resultsFiles[] = {
 		"HashingFunction1.csv",
 		"HashingFunction2.csv",
@@ -340,13 +346,13 @@ int main() {
 			HashTable<int, int> hashTable1(1000);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
-				hashTable1.insert1(/*jakis klucz*/, i); //Wymyslic klucz zeby potem moc znalezc go przy usuwaniu
+				hashTable1.insert1(klucze[j], j);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[0][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 			}
 			for (unsigned int j = iteracje-1; j >= 0; j--) {
 				auto start = chrono::high_resolution_clock::now();
-				hashTable1.remove1(/*jakis klucz*/);
+				hashTable1.remove1(klucze[j]);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[1][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 			}
@@ -357,13 +363,13 @@ int main() {
 			HashTable<int, int> hashTable2(1000);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
-				hashTable2.insert2(/*jakis klucz*/, i); //Wymyslic klucz zeby potem moc znalezc go przy usuwaniu
+				hashTable2.insert2(klucze[j], j);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[0][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 			}
 			for (unsigned int j = iteracje - 1; j >= 0; j--) {
 				auto start = chrono::high_resolution_clock::now();
-				hashTable2.remove2(/*jakis klucz*/);
+				hashTable2.remove2(klucze[j]);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[1][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 			}
@@ -373,13 +379,13 @@ int main() {
 			HashTable<int, int> hashTable3(1000);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
-				hashTable3.insert3(/*jakis klucz*/, i); //Wymyslic klucz zeby potem moc znalezc go przy usuwaniu
+				hashTable3.insert3(klucze[j], j);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[0][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 			}
 			for (unsigned int j = iteracje - 1; j >= 0; j--) {
 				auto start = chrono::high_resolution_clock::now();
-				hashTable3.remove3(/*jakis klucz*/);
+				hashTable3.remove3(klucze[j]);
 				auto end = chrono::high_resolution_clock::now();
 				algorithmsTimes[1][j] = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 			}
