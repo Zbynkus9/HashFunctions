@@ -21,7 +21,7 @@ private:
 	float loadFactor;
 	float maxLoadFactor;
 public:
-	HashTable(unsigned int cap, float maxLoad = 0.8) : capacity(cap), size(0), maxLoadFactor(maxLoad) {
+	HashTable(unsigned int cap, float maxLoad = 0.8) : capacity(cap), size(0), maxLoadFactor(maxLoad), loadFactor(0.0f) {
 		table = new HashNode<K, V>* [capacity];
 		for (unsigned int i = 0; i < capacity; ++i) {
 			table[i] = nullptr;
@@ -39,7 +39,7 @@ public:
 		return key % cap;
 	}
 	unsigned int hashFunction2(K key, unsigned int cap, unsigned int size) {
-		return ((int)(loadFactor * key) % size) / (float)(size / cap);
+		return (int)(((int)(loadFactor * key) % size) / (float)(size / cap)) % cap;
 	}
 	unsigned int hashFunction3(K key, unsigned int cap) {
 		unsigned int temp = key, hash = 0;
@@ -164,10 +164,10 @@ public:
 		capacity = newCapacity;
 	}
 	void insert1(K key, V value) {
-		size++;
 		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash1();
 		}
+		size++;
 		unsigned int index = hashFunction1(key, capacity);
 		while (table[index] != nullptr) {
 			index = (index + 1) % capacity;
@@ -176,10 +176,10 @@ public:
 		loadFactor = (float)size / capacity;
 	}
 	void insert2(K key, V value) {
-		size++;
 		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash2();
 		}
+		size++;
 		unsigned int index = hashFunction2(key, capacity, size);
 		while (table[index] != nullptr) {
 			index = (index + 1) % capacity;
@@ -188,10 +188,10 @@ public:
 		loadFactor = (float)size / capacity;
 	}
 	void insert3(K key, V value) {
-		size++;
 		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash3();
 		}
+		size++;
 		unsigned int index = hashFunction3(key, capacity);
 		while (table[index] != nullptr) {
 			index = (index + 1) % capacity;
@@ -241,6 +241,7 @@ public:
 		while (table[index] != nullptr || collisions < capacity) {
 			if (table[index] == nullptr) {
 				collisions++;
+				index = (index + 1) % capacity;
 				continue; // Skip empty slots
 			}
 			if (table[index]->key == key) {
@@ -253,7 +254,6 @@ public:
 				}
 				return;
 			}
-			index = (index + 1) % capacity;
 		}
 	}
 	void remove2(K key) {
@@ -262,6 +262,7 @@ public:
 		while (table[index] != nullptr || collisions < capacity) {
 			if (table[index] == nullptr) {
 				collisions++;
+				index = (index + 1) % capacity;
 				continue; // Skip empty slots
 			}
 			if (table[index]->key == key) {
@@ -274,7 +275,6 @@ public:
 				}
 				return;
 			}
-			index = (index + 1) % capacity;
 		}
 	}
 	void remove3(K key) {
@@ -283,6 +283,7 @@ public:
 		while (table[index] != nullptr || collisions < capacity) {
 			if (table[index] == nullptr) {
 				collisions++;
+				index = (index + 1) % capacity;
 				continue; // Skip empty slots
 			}
 			if (table[index]->key == key) {
@@ -295,7 +296,6 @@ public:
 				}
 				return;
 			}
-			index = (index + 1) % capacity;
 		}
 	}
 	unsigned int getSize() const {
@@ -313,13 +313,15 @@ public:
 };
 
 int main() {
-	srand(time(NULL)); // Inicjalizacja generatora liczb losowych
+	//srand(time(NULL)); // Inicjalizacja generatora liczb losowych
 	const unsigned int iteracje = 1000000;
+	//const unsigned int iteracje = 12000;
 
 	unsigned int* klucze = new unsigned int [iteracje];
 
 	for (unsigned int i = 0; i < iteracje; i++) {
 		klucze[i] = rand() % 25000000; // Generowanie losowych kluczy
+		//klucze[i] = i;
 	}
 
 	const string resultsFiles[] = {
@@ -433,7 +435,7 @@ int main() {
 		cout << "Zapisuje czasy do pliku: " << resultsFiles[i] << endl;
 
 		for (unsigned int j = 0; j < iteracje; j++) {
-			file << j << "," << algorithmsTimes[0][j] << "," << algorithmsTimes[1][j];
+			file << j+1 << "," << algorithmsTimes[0][j] << "," << algorithmsTimes[1][j];
 			file << endl;
 		}
 
