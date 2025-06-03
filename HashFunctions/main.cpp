@@ -9,8 +9,10 @@ class HashNode {
 public:
 	K key;
 	V value;
-	HashNode(K k, V v) : key(k), value(v) {}
+	bool usuniety;
+	HashNode(K k, V v) : key(k), value(v), usuniety(false) {}
 };
+
 
 template<typename K, typename V>
 class HashTable {
@@ -38,9 +40,14 @@ public:
 	unsigned int hashFunction1(K key, unsigned int cap) {
 		return key % cap;
 	}
-	unsigned int hashFunction2(K key, unsigned int cap, unsigned int size) {
-		return (int)(((int)(loadFactor * key) % size) / (float)(size / cap)) % cap;
+
+	unsigned int hashFunction2(K key, unsigned int cap) {
+		if (size == 0) return key % cap; // lub inna prosta funkcja
+		unsigned int denom = (size / cap);
+		if (denom == 0) denom = 1;
+		return (int)(((int)(loadFactor * key) % size) / (float)denom) % cap;
 	}
+
 	unsigned int hashFunction3(K key, unsigned int cap) {
 		unsigned int temp = key, hash = 0;
 		while (temp != 0) {
@@ -76,7 +83,7 @@ public:
 		}
 		for (unsigned int i = 0; i < capacity; ++i) {
 			if (table[i] != nullptr) {
-				unsigned int index = hashFunction2(table[i]->key, newCapacity, size);
+				unsigned int index = hashFunction2(table[i]->key, newCapacity);
 				while (newTable[index] != nullptr) {
 					index = (index + 1) % newCapacity;
 				}
@@ -113,14 +120,18 @@ public:
 			newTable[i] = nullptr;
 		}
 		for (unsigned int i = 0; i < capacity; ++i) {
-			if (table[i] != nullptr) {
+			if (table[i] != nullptr && !table[i]->usuniety) {
 				unsigned int index = hashFunction1(table[i]->key, newCapacity);
 				while (newTable[index] != nullptr) {
 					index = (index + 1) % newCapacity;
 				}
 				newTable[index] = table[i];
 			}
+			else if (table[i] != nullptr && table[i]->usuniety) {
+				delete table[i]; // Clean up deleted nodes
+			}
 		}
+
 		delete[] table;
 		table = newTable;
 		capacity = newCapacity;
@@ -132,12 +143,15 @@ public:
 			newTable[i] = nullptr;
 		}
 		for (unsigned int i = 0; i < capacity; ++i) {
-			if (table[i] != nullptr) {
-				unsigned int index = hashFunction2(table[i]->key, newCapacity, size);
+			if (table[i] != nullptr && !table[i]->usuniety) {
+				unsigned int index = hashFunction2(table[i]->key, newCapacity);
 				while (newTable[index] != nullptr) {
 					index = (index + 1) % newCapacity;
 				}
 				newTable[index] = table[i];
+			}
+			else if (table[i] != nullptr && table[i]->usuniety) {
+				delete table[i]; // Clean up deleted nodes
 			}
 		}
 		delete[] table;
@@ -151,12 +165,15 @@ public:
 			newTable[i] = nullptr;
 		}
 		for (unsigned int i = 0; i < capacity; ++i) {
-			if (table[i] != nullptr) {
+			if (table[i] != nullptr && !table[i]->usuniety) {
 				unsigned int index = hashFunction3(table[i]->key, newCapacity);
 				while (newTable[index] != nullptr) {
 					index = (index + 1) % newCapacity;
 				}
 				newTable[index] = table[i];
+			}
+			else if (table[i] != nullptr && table[i]->usuniety) {
+				delete table[i]; // Clean up deleted nodes
 			}
 		}
 		delete[] table;
@@ -167,43 +184,76 @@ public:
 		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash1();
 		}
-		size++;
 		unsigned int index = hashFunction1(key, capacity);
+		int firstUsuniety = -1;
 		while (table[index] != nullptr) {
+			if (table[index]->usuniety && firstUsuniety == -1) {
+				firstUsuniety = index;
+			}
 			index = (index + 1) % capacity;
 		}
-		table[index] = new HashNode<K, V>(key, value);
+		if (firstUsuniety != -1) {
+			delete table[firstUsuniety];
+			table[firstUsuniety] = new HashNode<K, V>(key, value);
+		}
+		else {
+			table[index] = new HashNode<K, V>(key, value);
+		}
+		size++;
 		loadFactor = (float)size / capacity;
 	}
+
 	void insert2(K key, V value) {
 		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash2();
 		}
-		size++;
-		unsigned int index = hashFunction2(key, capacity, size);
+		unsigned int index = hashFunction2(key, capacity);
+		int firstUsuniety = -1;
 		while (table[index] != nullptr) {
+			if (table[index]->usuniety && firstUsuniety == -1) {
+				firstUsuniety = index;
+			}
 			index = (index + 1) % capacity;
 		}
-		table[index] = new HashNode<K, V>(key, value);
+		if (firstUsuniety != -1) {
+			delete table[firstUsuniety];
+			table[firstUsuniety] = new HashNode<K, V>(key, value);
+		}
+		else {
+			table[index] = new HashNode<K, V>(key, value);
+		}
+		size++;
 		loadFactor = (float)size / capacity;
 	}
+
 	void insert3(K key, V value) {
 		if (loadFactor > maxLoadFactor) {
 			resizeAndReHash3();
 		}
-		size++;
 		unsigned int index = hashFunction3(key, capacity);
+		int firstUsuniety = -1;
 		while (table[index] != nullptr) {
+			if (table[index]->usuniety && firstUsuniety == -1) {
+				firstUsuniety = index;
+			}
 			index = (index + 1) % capacity;
 		}
-		table[index] = new HashNode<K, V>(key, value);
+		if (firstUsuniety != -1) {
+			delete table[firstUsuniety];
+			table[firstUsuniety] = new HashNode<K, V>(key, value);
+		}
+		else {
+			table[index] = new HashNode<K, V>(key, value);
+		}
+		size++;
 		loadFactor = (float)size / capacity;
 	}
+
 	V search1(K key) {
 		unsigned int index = hashFunction1(key, capacity);
 		unsigned int collisions = 0;
-		while (table[index] != nullptr || collisions < capacity) {
-			if (table[index]->key == key) {
+		while (table[index] != nullptr && collisions < capacity) {
+			if (!table[index]->usuniety && table[index]->key == key) {
 				return table[index]->value;
 			}
 			index = (index + 1) % capacity;
@@ -211,11 +261,12 @@ public:
 		}
 		return V();
 	}
+
 	V search2(K key) {
-		unsigned int index = hashFunction2(key, capacity, size);
+		unsigned int index = hashFunction2(key, capacity);
 		unsigned int collisions = 0;
-		while (table[index] != nullptr || collisions < capacity) {
-			if (table[index]->key == key) {
+		while (table[index] != nullptr && collisions < capacity) {
+			if (!table[index]->usuniety && table[index]->key == key) {
 				return table[index]->value;
 			}
 			index = (index + 1) % capacity;
@@ -223,11 +274,12 @@ public:
 		}
 		return V();
 	}
+
 	V search3(K key) {
 		unsigned int index = hashFunction3(key, capacity);
 		unsigned int collisions = 0;
-		while (table[index] != nullptr || collisions < capacity) {
-			if (table[index]->key == key) {
+		while (table[index] != nullptr && collisions < capacity) {
+			if (!table[index]->usuniety && table[index]->key == key) {
 				return table[index]->value;
 			}
 			index = (index + 1) % capacity;
@@ -235,18 +287,13 @@ public:
 		}
 		return V();
 	}
+
 	void remove1(K key) {
 		unsigned int index = hashFunction1(key, capacity);
 		unsigned int collisions = 0;
-		while (table[index] != nullptr || collisions < capacity) {
-			if (table[index] == nullptr) {
-				collisions++;
-				index = (index + 1) % capacity;
-				continue; // Skip empty slots
-			}
-			if (table[index]->key == key) {
-				delete table[index];
-				table[index] = nullptr;
+		while (table[index] != nullptr && collisions < capacity) {
+			if (!table[index]->usuniety && table[index]->key == key) {
+				table[index]->usuniety = true;
 				size--;
 				loadFactor = (float)size / capacity;
 				if (loadFactor <= maxLoadFactor / 4) {
@@ -254,20 +301,16 @@ public:
 				}
 				return;
 			}
+			index = (index + 1) % capacity;
+			collisions++;
 		}
 	}
 	void remove2(K key) {
-		unsigned int index = hashFunction2(key, capacity, size);
+		unsigned int index = hashFunction2(key, capacity);
 		unsigned int collisions = 0;
-		while (table[index] != nullptr || collisions < capacity) {
-			if (table[index] == nullptr) {
-				collisions++;
-				index = (index + 1) % capacity;
-				continue; // Skip empty slots
-			}
-			if (table[index]->key == key) {
-				delete table[index];
-				table[index] = nullptr;
+		while (table[index] != nullptr && collisions < capacity) {
+			if (!table[index]->usuniety && table[index]->key == key) {
+				table[index]->usuniety = true;
 				size--;
 				loadFactor = (float)size / capacity;
 				if (loadFactor <= maxLoadFactor / 4) {
@@ -275,20 +318,17 @@ public:
 				}
 				return;
 			}
+			index = (index + 1) % capacity;
+			collisions++;
 		}
 	}
+
 	void remove3(K key) {
 		unsigned int index = hashFunction3(key, capacity);
 		unsigned int collisions = 0;
-		while (table[index] != nullptr || collisions < capacity) {
-			if (table[index] == nullptr) {
-				collisions++;
-				index = (index + 1) % capacity;
-				continue; // Skip empty slots
-			}
-			if (table[index]->key == key) {
-				delete table[index];
-				table[index] = nullptr;
+		while (table[index] != nullptr && collisions < capacity) {
+			if (!table[index]->usuniety && table[index]->key == key) {
+				table[index]->usuniety = true;
 				size--;
 				loadFactor = (float)size / capacity;
 				if (loadFactor <= maxLoadFactor / 4) {
@@ -296,8 +336,11 @@ public:
 				}
 				return;
 			}
+			index = (index + 1) % capacity;
+			collisions++;
 		}
 	}
+
 	unsigned int getSize() const {
 		return size;
 	}
@@ -313,7 +356,7 @@ public:
 };
 
 int main() {
-	//srand(time(NULL)); // Inicjalizacja generatora liczb losowych
+	srand(time(NULL)); // Inicjalizacja generatora liczb losowych
 	const unsigned int iteracje = 1000000;
 	//const unsigned int iteracje = 12000;
 
@@ -357,7 +400,8 @@ int main() {
 		{
 		case 0:
 		{
-			HashTable<int, int> hashTable1(19);
+			HashTable<int, int> hashTable1(100000);
+			//HashTable<int, int> hashTable1(8000);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable1.insert1(klucze[j], j);
@@ -381,7 +425,8 @@ int main() {
 
 		case 1:
 		{
-			HashTable<int, int> hashTable2(19);
+			HashTable<int, int> hashTable2(100000);
+			//HashTable<int, int> hashTable2(8000);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable2.insert2(klucze[j], j);
@@ -405,7 +450,8 @@ int main() {
 
 		case 2:
 		{
-			HashTable<int, int> hashTable3(19);
+			HashTable<int, int> hashTable3(100000);
+			//HashTable<int, int> hashTable3(8000);
 			for (unsigned int j = 0; j < iteracje; j++) {
 				auto start = chrono::high_resolution_clock::now();
 				hashTable3.insert3(klucze[j], j);
