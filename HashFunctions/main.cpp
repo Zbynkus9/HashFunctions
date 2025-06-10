@@ -42,7 +42,7 @@ public:
 	}
 
 	unsigned int hashFunction2(K key, unsigned int cap) {
-		if (size == 0) return key % cap; // lub inna prosta funkcja
+		if (size == 0) return key % cap;
 		unsigned int denom = (size / cap);
 		if (denom == 0) denom = 1;
 		return (int)(((int)(loadFactor * key) % size) / (float)denom) % cap;
